@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DAG Visualization</title>
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 p-8">
+    <h1 class="text-3xl font-bold mb-6">Direct Acyclic Graph</h1>
+    <div id="dag-container" class="bg-white p-4 rounded shadow-lg">
+      <svg id="dag-svg" class="w-full h-96"></svg>
+    </div>
+
+    <div id="node-details" class="mt-4"></div>
+
+    <script>
+      const dagData = {
+        nodes: [
+          { id: "A", type: "TYPE_1" },
+          { id: "B", type: "TYPE_2" },
+          { id: "C", type: "TYPE_3" },
+          { id: "D", type: "TYPE_4" },
+          { id: "E", type: "TYPE_1" },
+        ],
+        links: [
+          { source: "A", target: "B" },
+          { source: "A", target: "C" },
+          { source: "B", target: "D" },
+          { source: "C", target: "D" },
+          { source: "D", target: "E" },
+        ],
+      };
+
+      const svg = document.getElementById("dag-svg");
+      const svgNS = "http://www.w3.org/2000/svg";
+
+      function createNode(node, x, y) {
+        const group = document.createElementNS(svgNS, "g");
+        group.setAttribute("transform", `translate(${x},${y})`);
+
+        const circle = document.createElementNS(svgNS, "circle");
+        circle.setAttribute("r", "20");
+        circle.setAttribute("fill", "white");
+        circle.setAttribute("stroke", "black");
+        circle.setAttribute("stroke-width", "1.5");
+        circle.setAttribute("hx-get", `/node-details/${node.id}`);
+        circle.setAttribute("hx-target", "#node-details");
+        circle.setAttribute("hx-trigger", "click");
+
+        const text = document.createElementNS(svgNS, "text");
+        text.textContent = node.id;
+        text.setAttribute("text-anchor", "middle");
+        text.setAttribute("dominant-baseline", "central");
+        text.setAttribute("font-size", "12");
+
+        group.appendChild(circle);
+        group.appendChild(text);
+        return group;
+      }
+
+      function createLink(source, target) {
+        const group = document.createElementNS(svgNS, "g");
+
+        const path = document.createElementNS(svgNS, "path");
+        const dx = target.x - source.x;
+        const dy = target.y - source.y;
+        const angle = Math.atan2(dy, dx);
+        const radius = 22; // Slightly larger than the node radius to keep arrows outside
+        const sourceX = source.x + radius * Math.cos(angle);
+        const sourceY = source.y + radius * Math.sin(angle);
+        const targetX = target.x - radius * Math.cos(angle);
+        const targetY = target.y - radius * Math.sin(angle);
+
+        // Use a quadratic curve to avoid crossing through text
+        const midX = (sourceX + targetX) / 2;
+        const midY = (sourceY + targetY) / 2;
+        const controlX = midX + 20 * Math.sin(angle);
+        const controlY = midY - 20 * Math.cos(angle);
+
+        path.setAttribute(
+          "d",
+          `M${sourceX},${sourceY} Q${controlX},${controlY} ${targetX},${targetY}`
+        );
+        path.setAttribute("stroke", "black");
+        path.setAttribute("stroke-width", "1.5");
+        path.setAttribute("fill", "none");
+        path.setAttribute("marker-end", "url(#arrowhead)");
+
+        group.appendChild(path);
+        return group;
+      }
+
+      function createArrowMarker() {
+        const defs = document.createElementNS(svgNS, "defs");
+        const marker = document.createElementNS(svgNS, "marker");
+        marker.setAttribute("id", "arrowhead");
+        marker.setAttribute("markerWidth", "10");
+        marker.setAttribute("markerHeight", "7");
+        marker.setAttribute("refX", "10");
+        marker.setAttribute("refY", "3.5");
+        marker.setAttribute("orient", "auto");
+
+        const polygon = document.createElementNS(svgNS, "polygon");
+        polygon.setAttribute("points", "0 0, 10 3.5, 0 7");
+        polygon.setAttribute("fill", "black");
+
+        marker.appendChild(polygon);
+        defs.appendChild(marker);
+        return defs;
+      }
+
+      function renderDAG() {
+        svg.appendChild(createArrowMarker());
+
+        const nodeWidth = 100;
+        const nodeHeight = 80;
+        dagData.nodes.forEach((node, index) => {
+          const x = (index % 3) * nodeWidth + 50;
+          const y = Math.floor(index / 3) * nodeHeight + 50;
+          node.x = x;
+          node.y = y;
+          svg.appendChild(createNode(node, x, y));
+        });
+
+        dagData.links.forEach((link) => {
+          const source = dagData.nodes.find((n) => n.id === link.source);
+          const target = dagData.nodes.find((n) => n.id === link.target);
+          if (source && target) {
+            svg.appendChild(createLink(source, target));
+          }
+        });
+      }
+
+      renderDAG();
+
+      htmx.on("htmx:afterSettle", function (evt) {
+        if (evt.detail.target.id === "node-details") {
+          console.log("Node details updated");
+        }
+      });
+    </script>
+  </body>
+</html>

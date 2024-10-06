@@ -10,13 +10,31 @@
   <body class="bg-gray-100 p-8">
     <h1 class="text-3xl font-bold mb-6">Direct Acyclic Graph</h1>
 
-    <div class="mb-4">
+    <!-- <div class="mb-4">
       <input
         type="text"
         id="nodeSearch"
         class="w-full p-2 border rounded"
         placeholder="Search for a node..."
       />
+      <ul id="searchResults" class="bg-white border rounded mt-1 hidden"></ul>
+    </div> -->
+    <div class="mb-4">
+      <div class="flex space-x-2">
+        <input
+          type="text"
+          id="nodeSearch"
+          class="flex-grow p-2 border rounded"
+          placeholder="Search for a node..."
+        />
+        <input
+          type="number"
+          id="levelSearch"
+          class="w-24 p-2 border rounded"
+          placeholder="Levels"
+          min="1"
+        />
+      </div>
       <ul id="searchResults" class="bg-white border rounded mt-1 hidden"></ul>
     </div>
 
@@ -175,9 +193,37 @@
 
       // Autocomplete search functionality
       let selectedNodeId = null;
+      let selectedLevels = 1; // Default to 1 level
 
       const searchInput = document.getElementById("nodeSearch");
+      const levelInput = document.getElementById("levelSearch");
       const searchResults = document.getElementById("searchResults");
+
+      levelInput.addEventListener("input", function () {
+        selectedLevels = parseInt(this.value) || 1;
+
+        if (selectedNodeId) {
+          const upstreamNodes = findUpstreamDependencies(
+            selectedNodeId,
+            selectedLevels
+          );
+          renderFilteredDAG(upstreamNodes);
+        }
+      });
+
+      searchResults.addEventListener("click", function (event) {
+        if (event.target.tagName === "LI") {
+          selectedNodeId = event.target.textContent;
+          searchInput.value = selectedNodeId;
+          searchResults.classList.add("hidden");
+
+          const upstreamNodes = findUpstreamDependencies(
+            selectedNodeId,
+            selectedLevels
+          );
+          renderFilteredDAG(upstreamNodes);
+        }
+      });
 
       searchInput.addEventListener("input", function () {
         const searchTerm = this.value.toLowerCase();
@@ -197,9 +243,11 @@
             selectedNodeId = node.id;
             searchInput.value = node.id;
             searchResults.classList.add("hidden");
-            console.log("Selected node:", selectedNodeId);
 
-            const upstreamNodes = findUpstreamDependencies(selectedNodeId);
+            const upstreamNodes = findUpstreamDependencies(
+              selectedNodeId,
+              selectedLevels
+            );
             renderFilteredDAG(upstreamNodes);
           });
 
@@ -217,20 +265,23 @@
         }
       });
 
-      // We'll render the filtered DAG
-      function findUpstreamDependencies(nodeId) {
+      // // We'll render the filtered DAG
+      // And we'll render it with its corresponding number of levels
+      function findUpstreamDependencies(nodeId, levels) {
         const upstreamNodes = new Set([nodeId]);
-        let nodesToCheck = [nodeId];
+        let nodesToCheck = [{ id: nodeId, level: 0 }];
 
         while (nodesToCheck.length > 0) {
-          const currentNode = nodesToCheck.pop();
+          const { id: currentNode, level } = nodesToCheck.pop();
+          if (level >= levels) continue;
+
           dagData.links.forEach((link) => {
             if (
               link.target === currentNode &&
               !upstreamNodes.has(link.source)
             ) {
               upstreamNodes.add(link.source);
-              nodesToCheck.push(link.source);
+              nodesToCheck.push({ id: link.source, level: level + 1 });
             }
           });
         }
@@ -300,8 +351,6 @@
               children.appendChild(li);
             });
         }
-
-        console.log("Node details updated", node);
 
         if (sidebar) sidebar.classList.remove("translate-x-full");
       }

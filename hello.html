@@ -199,23 +199,26 @@
       const levelInput = document.getElementById("levelSearch");
       const searchResults = document.getElementById("searchResults");
 
-      levelInput.addEventListener("input", function() {
-  selectedLevels = parseInt(this.value) || 1;
-  console.log("Selected levels:", selectedLevels);
-});
+      levelInput.addEventListener("input", function () {
+        selectedLevels = parseInt(this.value) || 1;
+        console.log("Selected levels:", selectedLevels);
+      });
 
-searchResults.addEventListener("click", function(event) {
-  if (event.target.tagName === "LI") {
-    selectedNodeId = event.target.textContent;
-    searchInput.value = selectedNodeId;
-    searchResults.classList.add("hidden");
-    console.log("Selected node:", selectedNodeId);
-    console.log("Selected levels:", selectedLevels);
+      searchResults.addEventListener("click", function (event) {
+        if (event.target.tagName === "LI") {
+          selectedNodeId = event.target.textContent;
+          searchInput.value = selectedNodeId;
+          searchResults.classList.add("hidden");
+          console.log("Selected node:", selectedNodeId);
+          console.log("Selected levels:", selectedLevels);
 
-    const upstreamNodes = findUpstreamDependencies(selectedNodeId);
-    renderFilteredDAG(upstreamNodes);
-  }
-});
+          const upstreamNodes = findUpstreamDependencies(
+            selectedNodeId,
+            selectedLevels
+          );
+          renderFilteredDAG(upstreamNodes);
+        }
+      });
 
       searchInput.addEventListener("input", function () {
         const searchTerm = this.value.toLowerCase();
@@ -236,9 +239,12 @@ searchResults.addEventListener("click", function(event) {
             searchInput.value = node.id;
             searchResults.classList.add("hidden");
             console.log("Selected node:", selectedNodeId);
-            console.log("number of levels");
+            console.log("Selected levels:", selectedLevels);
 
-            const upstreamNodes = findUpstreamDependencies(selectedNodeId);
+            const upstreamNodes = findUpstreamDependencies(
+              selectedNodeId,
+              selectedLevels
+            );
             renderFilteredDAG(upstreamNodes);
           });
 
@@ -256,20 +262,23 @@ searchResults.addEventListener("click", function(event) {
         }
       });
 
-      // We'll render the filtered DAG
-      function findUpstreamDependencies(nodeId) {
+      // // We'll render the filtered DAG
+      // And we'll render it with its corresponding number of levels
+      function findUpstreamDependencies(nodeId, levels) {
         const upstreamNodes = new Set([nodeId]);
-        let nodesToCheck = [nodeId];
+        let nodesToCheck = [{ id: nodeId, level: 0 }];
 
         while (nodesToCheck.length > 0) {
-          const currentNode = nodesToCheck.pop();
+          const { id: currentNode, level } = nodesToCheck.pop();
+          if (level >= levels) continue;
+
           dagData.links.forEach((link) => {
             if (
               link.target === currentNode &&
               !upstreamNodes.has(link.source)
             ) {
               upstreamNodes.add(link.source);
-              nodesToCheck.push(link.source);
+              nodesToCheck.push({ id: link.source, level: level + 1 });
             }
           });
         }

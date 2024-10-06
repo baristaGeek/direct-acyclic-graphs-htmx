@@ -4,7 +4,7 @@ Before running, make sure that you have Python 3.6+ and node 18.x or later insta
 
 To run locally:
 
-1. Go to the root project and open up 2 termianl windows
+1. Go to the root project and open up 2 terminal windows
 2. In the first one, create a virtual Python environment by running the following commands:
 ```
 python3 -m venv .venv
@@ -14,10 +14,11 @@ python3 -m venv .venv
 ```
 pip install -r requirements.txt
 ```
-4. The last step on the first terminal is to run the following command:
+4. The last step on the first terminal is to run the app by running the following command:
 ```
 flask --app dagData run
 ```
+If you get an error, try running `deactivate`, activate the environment again, and run the Flask app again.
 5. In the second terminal, run `npm install` and then the following command:
 ```
  http-server -p 8080

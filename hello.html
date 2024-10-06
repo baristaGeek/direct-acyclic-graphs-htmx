@@ -9,6 +9,17 @@
   </head>
   <body class="bg-gray-100 p-8">
     <h1 class="text-3xl font-bold mb-6">Direct Acyclic Graph</h1>
+
+    <div class="mb-4">
+      <input
+        type="text"
+        id="nodeSearch"
+        class="w-full p-2 border rounded"
+        placeholder="Search for a node..."
+      />
+      <ul id="searchResults" class="bg-white border rounded mt-1 hidden"></ul>
+    </div>
+
     <div id="dag-container" class="bg-white p-4 rounded shadow-lg">
       <svg id="dag-svg" class="w-full h-96"></svg>
     </div>
@@ -133,7 +144,104 @@
         });
       }
 
-      renderDAG();
+      // Autocomplete search functionality
+      let selectedNodeId = null;
+
+      const searchInput = document.getElementById("nodeSearch");
+      const searchResults = document.getElementById("searchResults");
+
+      searchInput.addEventListener("input", function () {
+        const searchTerm = this.value.toLowerCase();
+        const matchingNodes = dagData.nodes.filter((node) =>
+          node.id.toLowerCase().includes(searchTerm)
+        );
+
+        searchResults.innerHTML = "";
+        searchResults.classList.toggle("hidden", matchingNodes.length === 0);
+
+        matchingNodes.forEach((node) => {
+          const li = document.createElement("li");
+          li.textContent = node.id;
+          li.className = "p-2 hover:bg-gray-100 cursor-pointer";
+
+          li.addEventListener("click", function () {
+            selectedNodeId = node.id;
+            searchInput.value = node.id;
+            searchResults.classList.add("hidden");
+            console.log("Selected node:", selectedNodeId);
+
+            const upstreamNodes = findUpstreamDependencies(selectedNodeId);
+            renderFilteredDAG(upstreamNodes);
+          });
+          
+          searchResults.appendChild(li);
+        });
+      });
+
+      // Hide search results when clicking outside
+      document.addEventListener("click", function (event) {
+        if (
+          !searchInput.contains(event.target) &&
+          !searchResults.contains(event.target)
+        ) {
+          searchResults.classList.add("hidden");
+        }
+      });
+
+      // We'll render the filtered DAG
+      function findUpstreamDependencies(nodeId) {
+        const upstreamNodes = new Set([nodeId]);
+        let nodesToCheck = [nodeId];
+
+        while (nodesToCheck.length > 0) {
+          const currentNode = nodesToCheck.pop();
+          dagData.links.forEach((link) => {
+            if (
+              link.target === currentNode &&
+              !upstreamNodes.has(link.source)
+            ) {
+              upstreamNodes.add(link.source);
+              nodesToCheck.push(link.source);
+            }
+          });
+        }
+
+        return Array.from(upstreamNodes);
+      }
+
+      function renderFilteredDAG(nodeIds) {
+        svg.innerHTML = "";
+        svg.appendChild(createArrowMarker());
+
+        const filteredNodes = dagData.nodes.filter((node) =>
+          nodeIds.includes(node.id)
+        );
+        const filteredLinks = dagData.links.filter(
+          (link) =>
+            nodeIds.includes(link.source) && nodeIds.includes(link.target)
+        );
+
+        const nodeWidth = 100;
+        const nodeHeight = 80;
+        filteredNodes.forEach((node, index) => {
+          const x = (index % 3) * nodeWidth + 50;
+          const y = Math.floor(index / 3) * nodeHeight + 50;
+          node.x = x;
+          node.y = y;
+          svg.appendChild(createNode(node, x, y));
+        });
+
+        filteredLinks.forEach((link) => {
+          const source = filteredNodes.find((n) => n.id === link.source);
+          const target = filteredNodes.find((n) => n.id === link.target);
+          if (source && target) {
+            svg.appendChild(createLink(source, target));
+          }
+        });
+      }
+
+      // Initial render of the full graph
+      renderFilteredDAG(dagData.nodes.map((node) => node.id));
 
       htmx.on("htmx:afterSettle", function (evt) {
         if (evt.detail.target.id === "node-details") {

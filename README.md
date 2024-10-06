@@ -23,3 +23,10 @@ flask --app dagData run
  http-server -p 8080
  ```
  6. Go to http://localhost:8080/hello to see the app
+
+
+
+https://github.com/user-attachments/assets/ba8be1af-0c25-49e1-94f5-b1ce2a757d80
+
+
+    

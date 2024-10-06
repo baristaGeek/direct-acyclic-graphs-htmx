@@ -201,7 +201,14 @@
 
       levelInput.addEventListener("input", function () {
         selectedLevels = parseInt(this.value) || 1;
-        console.log("Selected levels:", selectedLevels);
+
+        if (selectedNodeId) {
+          const upstreamNodes = findUpstreamDependencies(
+            selectedNodeId,
+            selectedLevels
+          );
+          renderFilteredDAG(upstreamNodes);
+        }
       });
 
       searchResults.addEventListener("click", function (event) {
@@ -209,8 +216,6 @@
           selectedNodeId = event.target.textContent;
           searchInput.value = selectedNodeId;
           searchResults.classList.add("hidden");
-          console.log("Selected node:", selectedNodeId);
-          console.log("Selected levels:", selectedLevels);
 
           const upstreamNodes = findUpstreamDependencies(
             selectedNodeId,

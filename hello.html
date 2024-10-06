@@ -24,7 +24,38 @@
       <svg id="dag-svg" class="w-full h-96"></svg>
     </div>
 
-    <div id="node-details" class="mt-4"></div>
+    <div
+      id="sidebar"
+      class="fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform translate-x-full transition-transform duration-300 ease-in-out z-50"
+    >
+      <button
+        id="close-sidebar"
+        class="absolute top-2 left-2 text-gray-600 hover:text-gray-800"
+      >
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          ></path>
+        </svg>
+      </button>
+      <div id="node-details" class="p-6 mt-8">
+        <h2 id="sidebar-title" class="text-xl font-bold mb-4"></h2>
+        <p id="sidebar-type" class="mb-2"></p>
+        <h3 class="font-semibold mb-2">Parents:</h3>
+        <ul id="sidebar-parents" class="list-disc pl-5 mb-4"></ul>
+        <h3 class="font-semibold mb-2">Children:</h3>
+        <ul id="sidebar-children" class="list-disc pl-5"></ul>
+      </div>
+    </div>
 
     <script>
       const dagData = {
@@ -56,9 +87,7 @@
         circle.setAttribute("fill", "white");
         circle.setAttribute("stroke", "black");
         circle.setAttribute("stroke-width", "1.5");
-        circle.setAttribute("hx-get", `/node-details/${node.id}`);
-        circle.setAttribute("hx-target", "#node-details");
-        circle.setAttribute("hx-trigger", "click");
+        circle.addEventListener("click", () => openSidebar(node));
 
         const text = document.createElementNS(svgNS, "text");
         text.textContent = node.id;
@@ -173,7 +202,7 @@
             const upstreamNodes = findUpstreamDependencies(selectedNodeId);
             renderFilteredDAG(upstreamNodes);
           });
-          
+
           searchResults.appendChild(li);
         });
       });
@@ -239,6 +268,53 @@
           }
         });
       }
+
+      function openSidebar(node) {
+        const sidebar = document.getElementById("sidebar");
+        const title = document.getElementById("sidebar-title");
+        const type = document.getElementById("sidebar-type");
+        const parents = document.getElementById("sidebar-parents");
+        const children = document.getElementById("sidebar-children");
+
+        if (title) title.textContent = `Node ${node.id}`;
+        if (type) type.textContent = `Type: ${node.type}`;
+
+        if (parents) {
+          parents.innerHTML = "";
+          dagData.links
+            .filter((link) => link.target === node.id)
+            .forEach((link) => {
+              const li = document.createElement("li");
+              li.textContent = link.source;
+              parents.appendChild(li);
+            });
+        }
+
+        if (children) {
+          children.innerHTML = "";
+          dagData.links
+            .filter((link) => link.source === node.id)
+            .forEach((link) => {
+              const li = document.createElement("li");
+              li.textContent = link.target;
+              children.appendChild(li);
+            });
+        }
+
+        console.log("Node details updated", node);
+
+        if (sidebar) sidebar.classList.remove("translate-x-full");
+      }
+
+      function closeSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.classList.add("translate-x-full");
+      }
+
+      // Add event listener for close button
+      document
+        .getElementById("close-sidebar")
+        .addEventListener("click", closeSidebar);
 
       // Initial render of the full graph
       renderFilteredDAG(dagData.nodes.map((node) => node.id));

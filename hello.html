@@ -67,22 +67,15 @@
     </div>
 
     <script>
-      const dagData = {
-        nodes: [
-          { id: "A", type: "TYPE_1" },
-          { id: "B", type: "TYPE_2" },
-          { id: "C", type: "TYPE_3" },
-          { id: "D", type: "TYPE_4" },
-          { id: "E", type: "TYPE_1" },
-        ],
-        links: [
-          { source: "A", target: "B" },
-          { source: "A", target: "C" },
-          { source: "B", target: "D" },
-          { source: "C", target: "D" },
-          { source: "D", target: "E" },
-        ],
-      };
+      let dagData;
+
+      fetch("http://127.0.0.1:5000/get_dag_data")
+        .then((response) => response.json())
+        .then((data) => {
+          dagData = data;
+          renderFilteredDAG(dagData.nodes.map((node) => node.id));
+        })
+        .catch((error) => console.error("Error fetching DAG data:", error));
 
       const svg = document.getElementById("dag-svg");
       const svgNS = "http://www.w3.org/2000/svg";

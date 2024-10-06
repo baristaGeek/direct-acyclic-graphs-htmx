@@ -10,13 +10,31 @@
   <body class="bg-gray-100 p-8">
     <h1 class="text-3xl font-bold mb-6">Direct Acyclic Graph</h1>
 
-    <div class="mb-4">
+    <!-- <div class="mb-4">
       <input
         type="text"
         id="nodeSearch"
         class="w-full p-2 border rounded"
         placeholder="Search for a node..."
       />
+      <ul id="searchResults" class="bg-white border rounded mt-1 hidden"></ul>
+    </div> -->
+    <div class="mb-4">
+      <div class="flex space-x-2">
+        <input
+          type="text"
+          id="nodeSearch"
+          class="flex-grow p-2 border rounded"
+          placeholder="Search for a node..."
+        />
+        <input
+          type="number"
+          id="levelSearch"
+          class="w-24 p-2 border rounded"
+          placeholder="Levels"
+          min="1"
+        />
+      </div>
       <ul id="searchResults" class="bg-white border rounded mt-1 hidden"></ul>
     </div>
 
@@ -175,9 +193,29 @@
 
       // Autocomplete search functionality
       let selectedNodeId = null;
+      let selectedLevels = 1; // Default to 1 level
 
       const searchInput = document.getElementById("nodeSearch");
+      const levelInput = document.getElementById("levelSearch");
       const searchResults = document.getElementById("searchResults");
+
+      levelInput.addEventListener("input", function() {
+  selectedLevels = parseInt(this.value) || 1;
+  console.log("Selected levels:", selectedLevels);
+});
+
+searchResults.addEventListener("click", function(event) {
+  if (event.target.tagName === "LI") {
+    selectedNodeId = event.target.textContent;
+    searchInput.value = selectedNodeId;
+    searchResults.classList.add("hidden");
+    console.log("Selected node:", selectedNodeId);
+    console.log("Selected levels:", selectedLevels);
+
+    const upstreamNodes = findUpstreamDependencies(selectedNodeId);
+    renderFilteredDAG(upstreamNodes);
+  }
+});
 
       searchInput.addEventListener("input", function () {
         const searchTerm = this.value.toLowerCase();
@@ -198,6 +236,7 @@
             searchInput.value = node.id;
             searchResults.classList.add("hidden");
             console.log("Selected node:", selectedNodeId);
+            console.log("number of levels");
 
             const upstreamNodes = findUpstreamDependencies(selectedNodeId);
             renderFilteredDAG(upstreamNodes);

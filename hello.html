@@ -243,8 +243,6 @@
             selectedNodeId = node.id;
             searchInput.value = node.id;
             searchResults.classList.add("hidden");
-            console.log("Selected node:", selectedNodeId);
-            console.log("Selected levels:", selectedLevels);
 
             const upstreamNodes = findUpstreamDependencies(
               selectedNodeId,
@@ -353,8 +351,6 @@
               children.appendChild(li);
             });
         }
-
-        console.log("Node details updated", node);
 
         if (sidebar) sidebar.classList.remove("translate-x-full");
       }

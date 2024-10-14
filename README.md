@@ -1,4 +1,4 @@
-# zipline-test
+# Directed Acyclic Graphs with HTMX
 
 Before running, make sure that you have Python 3.6+ and node 18.x or later installed.
 
@@ -24,6 +24,8 @@ If you get an error, try running `deactivate`, activate the environment again, a
  http-server -p 8080
  ```
  6. Go to http://localhost:8080/hello to see the app
+
+ 7. (Optional) If you want to play with a different DAG, create your own by editing the `dagData.py` file
 
 
 
